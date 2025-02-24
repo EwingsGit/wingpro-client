@@ -80,7 +80,10 @@ export function RegisterForm({ setMode }: RegisterFormProps) {
       setError(null);
       const { confirmPassword, ...registerData } = data;
 
-      const response = await axios.post("/auth/register", registerData);
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/register`,
+        registerData
+      );
 
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
