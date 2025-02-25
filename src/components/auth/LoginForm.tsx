@@ -76,25 +76,22 @@ export function LoginForm() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      setIsLoading(true);
-      // Debug the URL
-      console.log("API URL:", import.meta.env.VITE_API_BASE_URL);
-      console.log("Google token:", credentialResponse.credential);
+      // Make sure the URL has the /api prefix
+      const apiUrl = import.meta.env.VITE_API_BASE_URL;
+      console.log("API URL being used:", apiUrl);
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/google`,
-        { token: credentialResponse.credential }
-      );
+      const response = await axios.post(`${apiUrl}/auth/google`, {
+        token: credentialResponse.credential,
+      });
+
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         toast.success("Google login successful!");
-        // Add navigation to dashboard
+        // Add navigation if needed
       }
     } catch (error) {
-      toast.error("Google login failed");
       console.error("Google login error:", error);
-    } finally {
-      setIsLoading(false);
+      toast.error("Google login failed");
     }
   };
 
