@@ -81,7 +81,7 @@ export function RegisterForm({ setMode }: RegisterFormProps) {
       const { confirmPassword, ...registerData } = data;
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/register`,
+        `${import.meta.env.VITE_API_URL}/auth/register`,
         registerData
       );
 
