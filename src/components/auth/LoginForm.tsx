@@ -34,7 +34,12 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+// Add onLoginSuccess prop
+interface LoginFormProps {
+  onLoginSuccess?: () => void;
+}
+
+export function LoginForm({ onLoginSuccess = () => {} }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,12 +58,17 @@ export function LoginForm() {
       setIsLoading(true);
       setError(null);
 
-      const response = await axios.post("/auth/login", data);
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
+        data
+      );
 
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         toast.success("Login successful!");
-        // Add navigation to dashboard
+
+        // Call onLoginSuccess to update authentication state
+        onLoginSuccess();
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -76,22 +86,26 @@ export function LoginForm() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      // Make sure the URL has the /api prefix
-      const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      console.log("API URL being used:", apiUrl);
-
-      const response = await axios.post(`${apiUrl}/auth/google`, {
-        token: credentialResponse.credential,
-      });
+      setIsLoading(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/google`,
+        {
+          token: credentialResponse.credential,
+        }
+      );
 
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         toast.success("Google login successful!");
-        // Add navigation if needed
+
+        // Call onLoginSuccess to update authentication state
+        onLoginSuccess();
       }
     } catch (error) {
-      console.error("Google login error:", error);
       toast.error("Google login failed");
+      console.error("Google login error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
