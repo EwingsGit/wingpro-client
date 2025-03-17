@@ -34,7 +34,7 @@ export default function UpcomingTasks() {
       nextTwoWeeks.setDate(nextTwoWeeks.getDate() + 14);
 
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/tasks`,
+        `${import.meta.env.VITE_API_BASE_URL}/tasks`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

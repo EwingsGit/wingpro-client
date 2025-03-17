@@ -23,7 +23,7 @@ export default function Categories() {
       setIsLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/categories`,
+        `${import.meta.env.VITE_API_BASE_URL}/categories`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -44,7 +44,7 @@ export default function Categories() {
       setIsAdding(true);
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/categories`,
+        `${import.meta.env.VITE_API_BASE_URL}/categories`,
         { name: newCategoryName },
         {
           headers: { Authorization: `Bearer ${token}` },
