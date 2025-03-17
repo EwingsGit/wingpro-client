@@ -1,23 +1,32 @@
 // src/components/dashboard/Sidebar.tsx
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 interface SidebarProps {
   onLogout: () => void;
 }
 
 export default function Sidebar({ onLogout }: SidebarProps) {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const isActive = (path: string) => {
+    return currentPath === path
+      ? "bg-blue-50 text-blue-600"
+      : "text-gray-700 hover:bg-blue-50 hover:text-blue-600";
+  };
+
   return (
-    <aside className="w-64 bg-white shadow-md">
+    <aside className="w-64 bg-white shadow-md flex flex-col h-full">
       <div className="p-4 border-b">
         <h2 className="text-xl font-bold">WingPro</h2>
       </div>
 
-      <nav className="py-4">
-        <ul className="space-y-2">
+      <nav className="flex-1 overflow-y-auto py-4">
+        <ul className="space-y-1">
           <li>
             <Link
               to="/dashboard"
-              className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+              className={`block px-4 py-2 ${isActive("/dashboard")}`}
             >
               All Tasks
             </Link>
@@ -25,7 +34,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <li>
             <Link
               to="/dashboard/today"
-              className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+              className={`block px-4 py-2 ${isActive("/dashboard/today")}`}
             >
               Today
             </Link>
@@ -33,7 +42,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <li>
             <Link
               to="/dashboard/upcoming"
-              className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+              className={`block px-4 py-2 ${isActive("/dashboard/upcoming")}`}
             >
               Upcoming
             </Link>
@@ -42,7 +51,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <li>
             <Link
               to="/dashboard/categories"
-              className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+              className={`block px-4 py-2 ${isActive("/dashboard/categories")}`}
             >
               Categories
             </Link>
@@ -50,7 +59,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="mt-auto p-4 border-t">
+      <div className="p-4 border-t mt-auto">
         <button
           onClick={onLogout}
           className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md"
