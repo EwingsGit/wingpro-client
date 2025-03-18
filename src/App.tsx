@@ -16,9 +16,12 @@ function App() {
     const token = localStorage.getItem("token");
     if (token) {
       setIsAuthenticated(true);
-      navigate("/dashboard");
+      // Only navigate if we're on the homepage
+      if (window.location.pathname === "/") {
+        navigate("/dashboard");
+      }
     }
-  }, [navigate]);
+  }, []); // Empty dependency array - run only once on mount
 
   const handleLogout = () => {
     localStorage.removeItem("token");
