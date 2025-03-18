@@ -2,6 +2,12 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import EditTaskForm from "./EditTaskForm";
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 interface Task {
   id: number;
@@ -10,17 +16,22 @@ interface Task {
   status: string;
   priority: string | null;
   due_date: string | null;
+  category_id: number | null;
+  category?: Category;
   created_at: string;
   updated_at: string;
 }
 
 export default function TaskList() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchTasks();
+    fetchCategories();
   }, []);
 
   const fetchTasks = async () => {
@@ -35,11 +46,32 @@ export default function TaskList() {
       );
       setTasks(response.data);
     } catch (error) {
-      toast.error("Failed to fetch tasks");
       console.error("Error fetching tasks:", error);
+      toast.error("Failed to fetch tasks");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/categories`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const getCategoryName = (categoryId: number | null): string => {
+    if (!categoryId) return "";
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.name : "";
   };
 
   const handleStatusChange = async (taskId: number, newStatus: string) => {
@@ -62,8 +94,8 @@ export default function TaskList() {
 
       toast.success("Task updated");
     } catch (error) {
-      toast.error("Failed to update task");
       console.error("Error updating task:", error);
+      toast.error("Failed to update task");
     }
   };
 
@@ -84,8 +116,8 @@ export default function TaskList() {
 
       toast.success("Task deleted");
     } catch (error) {
-      toast.error("Failed to delete task");
       console.error("Error deleting task:", error);
+      toast.error("Failed to delete task");
     }
   };
 
@@ -159,10 +191,15 @@ export default function TaskList() {
                   {task.description && (
                     <p className="text-gray-600 mt-1">{task.description}</p>
                   )}
-                  <div className="mt-2 flex items-center space-x-4 text-sm">
+                  <div className="mt-2 flex items-center flex-wrap gap-2">
                     {task.due_date && (
-                      <span className="text-gray-500">
+                      <span className="text-gray-500 text-sm">
                         Due: {new Date(task.due_date).toLocaleDateString()}
+                      </span>
+                    )}
+                    {task.category_id && (
+                      <span className="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                        {getCategoryName(task.category_id)}
                       </span>
                     )}
                     {task.priority && (
@@ -196,6 +233,12 @@ export default function TaskList() {
                   </div>
                 </div>
                 <div className="flex space-x-2">
+                  <button
+                    onClick={() => setEditingTask(task)}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    Edit
+                  </button>
                   <select
                     value={task.status}
                     onChange={(e) =>
@@ -218,6 +261,18 @@ export default function TaskList() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <EditTaskForm
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onTaskUpdated={() => {
+            setEditingTask(null);
+            fetchTasks();
+          }}
+        />
       )}
     </div>
   );

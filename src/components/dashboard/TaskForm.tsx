@@ -1,4 +1,4 @@
-// src/components/dashboard/EditTaskForm.tsx
+// src/components/dashboard/TaskForm.tsx
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -8,38 +8,21 @@ interface Category {
   name: string;
 }
 
-interface Task {
-  id: number;
-  title: string;
-  description: string | null;
-  status: string;
-  priority: string | null;
-  due_date: string | null;
-  category_id: number | null;
-}
-
-interface EditTaskFormProps {
-  task: Task;
+interface TaskFormProps {
   onClose: () => void;
-  onTaskUpdated: () => void;
+  onTaskAdded: () => void;
 }
 
-export default function EditTaskForm({
-  task,
-  onClose,
-  onTaskUpdated,
-}: EditTaskFormProps) {
+export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
-    title: task.title,
-    description: task.description || "",
-    status: task.status,
-    priority: task.priority || "medium",
-    category_id: task.category_id ? String(task.category_id) : "",
-    due_date: task.due_date
-      ? new Date(task.due_date).toISOString().split("T")[0]
-      : "",
+    title: "",
+    description: "",
+    status: "todo",
+    priority: "medium",
+    category_id: "",
+    due_date: "",
   });
 
   useEffect(() => {
@@ -80,8 +63,8 @@ export default function EditTaskForm({
       setIsSubmitting(true);
       const token = localStorage.getItem("token");
 
-      await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/tasks/${task.id}`,
+      await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/tasks`,
         {
           ...formData,
           category_id: formData.category_id
@@ -93,11 +76,11 @@ export default function EditTaskForm({
         }
       );
 
-      toast.success("Task updated successfully");
-      onTaskUpdated();
+      toast.success("Task created successfully");
+      onTaskAdded();
     } catch (error) {
-      console.error("Error updating task:", error);
-      toast.error("Failed to update task");
+      console.error("Error creating task:", error);
+      toast.error("Failed to create task");
     } finally {
       setIsSubmitting(false);
     }
@@ -107,7 +90,7 @@ export default function EditTaskForm({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
         <div className="p-4 border-b">
-          <h2 className="text-xl font-bold">Edit Task</h2>
+          <h2 className="text-xl font-bold">Create New Task</h2>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
@@ -211,7 +194,7 @@ export default function EditTaskForm({
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Saving..." : "Save Changes"}
+              {isSubmitting ? "Creating..." : "Create Task"}
             </button>
           </div>
         </form>
