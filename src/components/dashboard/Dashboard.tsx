@@ -1,6 +1,6 @@
 // src/components/dashboard/Dashboard.tsx
 import { useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import TaskList from "./TaskList";
 import TaskForm from "./TaskForm";
 import Sidebar from "./Sidebar";
@@ -15,6 +15,10 @@ interface DashboardProps {
 export default function Dashboard({ onLogout }: DashboardProps) {
   const [showAddTask, setShowAddTask] = useState(false);
   const [refreshTasks, setRefreshTasks] = useState(false);
+  const location = useLocation();
+
+  // Debug current path
+  console.log("Current path:", location.pathname);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -40,7 +44,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             }
           />
           <Route
-            path="/today"
+            path="today"
             element={
               <>
                 <div className="flex justify-between items-center mb-6">
@@ -57,7 +61,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             }
           />
           <Route
-            path="/upcoming"
+            path="upcoming"
             element={
               <>
                 <div className="flex justify-between items-center mb-6">
@@ -73,7 +77,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </>
             }
           />
-          <Route path="/categories" element={<Categories />} />
+          <Route path="categories" element={<Categories />} />
         </Routes>
 
         {showAddTask && (

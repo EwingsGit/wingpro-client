@@ -7,10 +7,9 @@ interface SidebarProps {
 
 export default function Sidebar({ onLogout }: SidebarProps) {
   const location = useLocation();
-  const currentPath = location.pathname;
 
   const isActive = (path: string) => {
-    return currentPath === path
+    return location.pathname.endsWith(path)
       ? "bg-blue-50 text-blue-600"
       : "text-gray-700 hover:bg-blue-50 hover:text-blue-600";
   };
@@ -34,7 +33,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <li>
             <Link
               to="/dashboard/today"
-              className={`block px-4 py-2 ${isActive("/dashboard/today")}`}
+              className={`block px-4 py-2 ${isActive("/today")}`}
             >
               Today
             </Link>
@@ -42,7 +41,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <li>
             <Link
               to="/dashboard/upcoming"
-              className={`block px-4 py-2 ${isActive("/dashboard/upcoming")}`}
+              className={`block px-4 py-2 ${isActive("/upcoming")}`}
             >
               Upcoming
             </Link>
@@ -51,7 +50,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <li>
             <Link
               to="/dashboard/categories"
-              className={`block px-4 py-2 ${isActive("/dashboard/categories")}`}
+              className={`block px-4 py-2 ${isActive("/categories")}`}
             >
               Categories
             </Link>
