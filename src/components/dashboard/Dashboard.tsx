@@ -7,6 +7,8 @@ import Sidebar from "./Sidebar";
 import Categories from "./Categories";
 import TodayTasks from "./TodayTasks";
 import UpcomingTasks from "./UpcomingTasks";
+import DashboardStats from "./DashboardStats";
+import DragDropTaskList from "./DragDropTaskList";
 
 interface DashboardProps {
   onLogout: () => void;
@@ -78,6 +80,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             }
           />
           <Route path="categories" element={<Categories />} />
+          <Route path="stats" element={<DashboardStats />} />
+          <Route path="kanban" element={<DragDropTaskList />} />
         </Routes>
 
         {showAddTask && (

@@ -14,9 +14,9 @@ interface Task {
   category_id: number | null;
 }
 
-interface SearchResult {
-  tasks: Task[];
-}
+// interface SearchResult {
+//   tasks: Task[];
+// }
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");

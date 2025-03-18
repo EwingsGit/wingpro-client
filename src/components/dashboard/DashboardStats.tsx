@@ -30,10 +30,13 @@ interface Category {
   name: string;
 }
 
+// Define a specific type for the STATUS_COLORS keys
+type StatusColorKey = "todo" | "inprogress" | "completed";
+
 interface StatusData {
   name: string;
   value: number;
-  colorKey: string;
+  colorKey: StatusColorKey;
 }
 
 interface PriorityData {
@@ -47,7 +50,7 @@ interface CategoryData {
 }
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
-const STATUS_COLORS = {
+const STATUS_COLORS: Record<StatusColorKey, string> = {
   todo: "#FFBB28",
   inprogress: "#0088FE",
   completed: "#00C49F",
