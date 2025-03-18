@@ -69,6 +69,30 @@ export default function Sidebar({ onLogout }: SidebarProps) {
               Categories
             </Link>
           </li>
+          <li>
+            <Link
+              to="/dashboard/stats"
+              className={`block px-4 py-2 ${
+                isActive("/dashboard/stats")
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+              }`}
+            >
+              Dashboard Stats
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/dashboard/kanban"
+              className={`block px-4 py-2 ${
+                isActive("/dashboard/kanban")
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+              }`}
+            >
+              Kanban Board
+            </Link>
+          </li>
         </ul>
       </nav>
 
