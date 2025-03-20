@@ -1,6 +1,7 @@
 // src/components/dashboard/Dashboard.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { PlusCircle } from "lucide-react";
 import TaskList from "./TaskList";
 import TaskForm from "./TaskForm";
 import Sidebar from "./Sidebar";
@@ -11,6 +12,7 @@ import OverdueTasks from "./OverdueTasks";
 import DashboardStats from "./DashboardStats";
 import DragDropTaskList from "./DragDropTaskList";
 import DashboardHome from "./DashboardHome";
+import "../../../src/theme.css";
 
 interface DashboardProps {
   onLogout: () => void;
@@ -19,46 +21,115 @@ interface DashboardProps {
 export default function Dashboard({ onLogout }: DashboardProps) {
   const [showAddTask, setShowAddTask] = useState(false);
   const [refreshTasks, setRefreshTasks] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Handle responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar onLogout={onLogout} />
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <div
+        className={`sidebar fixed md:relative z-10 h-full transition-all duration-300 ease-in-out ${
+          sidebarOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0 md:w-20"
+        }`}
+      >
+        <Sidebar
+          onLogout={onLogout}
+          collapsed={!sidebarOpen && !isMobile}
+          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
+      </div>
 
-      <main className="flex-1 p-6 overflow-auto">
-        <div className="flex justify-end mb-6">
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-0"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
+      <main className="flex-1 p-6 md:p-8 overflow-auto">
+        <div className="flex justify-between items-center mb-8">
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          )}
+
           <button
             onClick={() => setShowAddTask(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="btn-primary flex items-center shadow-md ml-auto"
           >
+            <PlusCircle className="h-5 w-5 mr-1" />
             Add New Task
           </button>
         </div>
 
-        <Routes>
-          <Route path="/" element={<DashboardHome />} />
-          <Route
-            path="all-tasks"
-            element={<TaskList key={refreshTasks ? "refresh" : "normal"} />}
-          />
-          <Route path="today" element={<TodayTasks />} />
-          <Route path="upcoming" element={<UpcomingTasks />} />
-          <Route path="overdue" element={<OverdueTasks />} />
-          <Route path="categories" element={<Categories />} />
-          <Route path="stats" element={<DashboardStats />} />
-          <Route path="kanban" element={<DragDropTaskList />} />
-          {/* Redirect any other dashboard paths to home */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+        <div className="fade-in">
+          <Routes>
+            <Route path="/" element={<DashboardHome />} />
+            <Route
+              path="all-tasks"
+              element={<TaskList key={refreshTasks ? "refresh" : "normal"} />}
+            />
+            <Route path="today" element={<TodayTasks />} />
+            <Route path="upcoming" element={<UpcomingTasks />} />
+            <Route path="overdue" element={<OverdueTasks />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="stats" element={<DashboardStats />} />
+            <Route path="kanban" element={<DragDropTaskList />} />
+            {/* Redirect any other dashboard paths to home */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
 
-        {showAddTask && (
-          <TaskForm
-            onClose={() => setShowAddTask(false)}
-            onTaskAdded={() => {
-              setShowAddTask(false);
-              setRefreshTasks(!refreshTasks);
-            }}
-          />
-        )}
+          {showAddTask && (
+            <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+              <div className="modal-content w-full max-w-md mx-4 fade-in">
+                <TaskForm
+                  onClose={() => setShowAddTask(false)}
+                  onTaskAdded={() => {
+                    setShowAddTask(false);
+                    setRefreshTasks(!refreshTasks);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

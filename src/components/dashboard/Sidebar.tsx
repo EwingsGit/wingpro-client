@@ -28,8 +28,24 @@ export default function Sidebar({ onLogout }: SidebarProps) {
 
   return (
     <aside className="w-64 bg-white shadow-md flex flex-col h-full">
-      <div className="p-4 border-b">
-        <h2 className="text-xl font-bold">WingPro</h2>
+      <div className="p-4 border-b flex items-center">
+        <div className="flex items-center">
+          <div className="mr-2">
+            <svg
+              width="40"
+              height="30"
+              viewBox="0 0 200 160"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M95 10 L180 120 L120 85 L95 10" fill="#1e77e3" />
+              <path d="M95 10 L30 80 L80 60 L95 10" fill="#3b92f0" />
+            </svg>
+          </div>
+          <div className="flex flex-col">
+            <h2 className="text-xl font-bold text-gray-800">WingPro</h2>
+            <span className="text-xs text-blue-500">thewingpro.com</span>
+          </div>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4">

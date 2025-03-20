@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { X, Calendar, AlertCircle } from "lucide-react";
 
 interface Category {
   id: number;
@@ -24,6 +25,7 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
     category_id: "",
     due_date: "",
   });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -36,11 +38,23 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
         setCategories(response.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
+        toast.error("Failed to load categories");
       }
     };
 
     fetchCategories();
   }, []);
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -49,13 +63,21 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title.trim()) {
-      toast.error("Task title is required");
+    if (!validateForm()) {
       return;
     }
 
@@ -87,14 +109,21 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-        <div className="p-4 border-b">
-          <h2 className="text-xl font-bold">Create New Task</h2>
-        </div>
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+    <>
+      <div className="modal-header">
+        <h2 className="text-xl font-bold">Create New Task</h2>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="modal-body">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -102,34 +131,40 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="Task title"
-              required
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              placeholder="What needs to be done?"
+              className={`form-control ${errors.title ? "border-red-500" : ""}`}
             />
+            {errors.title && (
+              <div className="mt-1 flex items-center text-red-500 text-sm">
+                <AlertCircle size={14} className="mr-1" /> {errors.title}
+              </div>
+            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Description
             </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Task description"
+              placeholder="Add details about this task..."
               rows={3}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              className="form-control"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Status</label>
+              <label className="block text-sm font-medium mb-1 text-gray-700">
+                Status
+              </label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="form-control"
               >
                 <option value="todo">To Do</option>
                 <option value="inprogress">In Progress</option>
@@ -138,12 +173,14 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Priority</label>
+              <label className="block text-sm font-medium mb-1 text-gray-700">
+                Priority
+              </label>
               <select
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="form-control"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -153,12 +190,14 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Category</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Category
+            </label>
             <select
               name="category_id"
               value={formData.category_id}
               onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              className="form-control"
             >
               <option value="">No Category</option>
               {categories.map((category) => (
@@ -170,20 +209,28 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Due Date</label>
-            <input
-              type="date"
-              name="due_date"
-              value={formData.due_date}
-              onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
-            />
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Due Date
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                name="due_date"
+                value={formData.due_date}
+                onChange={handleChange}
+                className="form-control pr-10"
+              />
+              <Calendar
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+            </div>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="modal-footer pt-2">
             <button
               type="button"
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              className="btn-outline"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -191,14 +238,21 @@ export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="btn-primary ml-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Creating..." : "Create Task"}
+              {isSubmitting ? (
+                <>
+                  <div className="spinner mr-2 w-4 h-4"></div>
+                  Creating...
+                </>
+              ) : (
+                "Create Task"
+              )}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </>
   );
 }
