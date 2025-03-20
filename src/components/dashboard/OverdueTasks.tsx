@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import EditTaskForm from "./EditTaskForm";
 
 interface Task {
   id: number;
@@ -10,17 +11,41 @@ interface Task {
   status: string;
   priority: string | null;
   due_date: string | null;
+  category_id: number | null;
   created_at: string;
   updated_at: string;
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export default function OverdueTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchOverdueTasks();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/categories`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   const fetchOverdueTasks = async () => {
     try {
@@ -61,6 +86,64 @@ export default function OverdueTasks() {
     }
   };
 
+  const getCategoryName = (categoryId: number | null): string => {
+    if (!categoryId) return "";
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.name : "";
+  };
+
+  const handleStatusChange = async (taskId: number, newStatus: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/tasks/${taskId}`,
+        { status: newStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // If task is completed, remove it from overdue tasks
+      if (newStatus === "completed") {
+        setTasks(tasks.filter((task) => task.id !== taskId));
+        toast.success("Task marked as completed and removed from overdue list");
+      } else {
+        // Otherwise just update the status
+        setTasks(
+          tasks.map((task) =>
+            task.id === taskId ? { ...task, status: newStatus } : task
+          )
+        );
+        toast.success("Task updated");
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error("Failed to update task");
+    }
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `${import.meta.env.VITE_API_BASE_URL}/tasks/${taskId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Remove task locally
+      setTasks(tasks.filter((task) => task.id !== taskId));
+
+      toast.success("Task deleted");
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("Failed to delete task");
+    }
+  };
+
   return (
     <div>
       {isLoading ? (
@@ -74,17 +157,26 @@ export default function OverdueTasks() {
       ) : (
         <div className="space-y-4">
           {tasks.map((task) => (
-            <div key={task.id} className="bg-white rounded-lg shadow p-4">
+            <div
+              key={task.id}
+              className="bg-white rounded-lg shadow p-4 cursor-pointer"
+              onClick={() => setEditingTask(task)}
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-medium text-lg">{task.title}</h3>
                   {task.description && (
                     <p className="text-gray-600 mt-1">{task.description}</p>
                   )}
-                  <div className="mt-2 flex items-center space-x-4 text-sm">
+                  <div className="mt-2 flex items-center flex-wrap gap-2">
                     {task.due_date && (
-                      <span className="text-red-500 font-medium">
+                      <span className="text-red-500 font-medium text-sm">
                         Due: {new Date(task.due_date).toLocaleDateString()}
+                      </span>
+                    )}
+                    {task.category_id && (
+                      <span className="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                        {getCategoryName(task.category_id)}
                       </span>
                     )}
                     {task.priority && (
@@ -117,10 +209,57 @@ export default function OverdueTasks() {
                     </span>
                   </div>
                 </div>
+                <div
+                  className="flex space-x-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingTask(task);
+                    }}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    Edit
+                  </button>
+                  <select
+                    value={task.status}
+                    onChange={(e) =>
+                      handleStatusChange(task.id, e.target.value)
+                    }
+                    className="text-sm border rounded px-2 py-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <option value="todo">To Do</option>
+                    <option value="inprogress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTask(task.id);
+                    }}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <EditTaskForm
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onTaskUpdated={() => {
+            setEditingTask(null);
+            fetchOverdueTasks();
+          }}
+        />
       )}
     </div>
   );
