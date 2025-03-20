@@ -1,8 +1,9 @@
 // src/components/dashboard/DragDropTaskList.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 interface Task {
   id: number;
@@ -13,6 +14,179 @@ interface Task {
   due_date: string | null;
   order: number;
 }
+
+// Define item types for DnD
+const ItemTypes = {
+  TASK: "task",
+};
+
+// TaskCard component with drag functionality
+interface TaskCardProps {
+  task: Task;
+  index: number;
+  moveTask: (
+    dragIndex: number,
+    hoverIndex: number,
+    sourceStatus: string,
+    targetStatus: string
+  ) => void;
+  status: string;
+}
+
+interface DragItem {
+  index: number;
+  id: string;
+  status: string;
+  type: string;
+}
+
+const TaskCard = ({ task, index, moveTask, status }: TaskCardProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: ItemTypes.TASK,
+    item: { id: task.id.toString(), index, status },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }));
+
+  const [, drop] = useDrop<DragItem>({
+    accept: ItemTypes.TASK,
+    hover: (item, monitor) => {
+      if (!ref.current) {
+        return;
+      }
+
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      const sourceStatus = item.status;
+      const targetStatus = status;
+
+      // Don't replace items with themselves
+      if (dragIndex === hoverIndex && sourceStatus === targetStatus) {
+        return;
+      }
+
+      // Determine rectangle on screen
+      const hoverBoundingRect = ref.current.getBoundingClientRect();
+
+      // Get vertical middle
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+
+      // Determine mouse position
+      const clientOffset = monitor.getClientOffset();
+
+      // Get pixels to the top
+      const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
+
+      // Only perform the move when the mouse has crossed half of the items height
+      // When dragging downwards, only move when the cursor is below 50%
+      // When dragging upwards, only move when the cursor is above 50%
+
+      // Dragging downwards
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return;
+      }
+
+      // Dragging upwards
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return;
+      }
+
+      // Time to actually perform the action
+      moveTask(dragIndex, hoverIndex, sourceStatus, targetStatus);
+
+      // Note: we're mutating the monitor item here!
+      // Generally it's better to avoid mutations,
+      // but it's good here for the sake of performance
+      // to avoid expensive index searches.
+      item.index = hoverIndex;
+      item.status = targetStatus;
+    },
+  });
+
+  drag(drop(ref));
+
+  return (
+    <div
+      ref={ref}
+      className={`bg-white rounded-lg shadow p-3 mb-2 ${
+        isDragging ? "opacity-50" : ""
+      }`}
+      style={{ cursor: "move" }}
+    >
+      <div className="font-medium">{task.title}</div>
+      {task.description && (
+        <div className="text-sm text-gray-500 mt-1 truncate">
+          {task.description}
+        </div>
+      )}
+      {task.priority && (
+        <div
+          className={`mt-2 text-xs inline-block px-2 py-1 rounded-full ${
+            task.priority === "high"
+              ? "bg-red-100 text-red-800"
+              : task.priority === "medium"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-green-100 text-green-800"
+          }`}
+        >
+          {task.priority}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// TaskColumn component
+interface TaskColumnProps {
+  title: string;
+  status: string;
+  tasks: Task[];
+  moveTask: (
+    dragIndex: number,
+    hoverIndex: number,
+    sourceStatus: string,
+    targetStatus: string
+  ) => void;
+}
+
+const TaskColumn = ({ title, status, tasks, moveTask }: TaskColumnProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const [, drop] = useDrop({
+    accept: ItemTypes.TASK,
+    hover: (item: DragItem, monitor) => {
+      // If the column is empty or it's a drop directly onto the column (not a task)
+      if (tasks.length === 0 && monitor.isOver({ shallow: true })) {
+        moveTask(item.index, 0, item.status, status);
+        item.index = 0;
+        item.status = status;
+      }
+    },
+  });
+
+  drop(ref);
+
+  return (
+    <div className="bg-gray-100 rounded-lg p-4">
+      <h3 className="font-medium text-lg mb-4">{title}</h3>
+      <div ref={ref} className="min-h-[200px]">
+        {tasks.map((task, index) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            index={index}
+            moveTask={moveTask}
+            status={status}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function DragDropTaskList() {
   const [tasks, setTasks] = useState<Record<string, Task[]>>({
@@ -67,65 +241,62 @@ export default function DragDropTaskList() {
     }
   };
 
-  const handleDragEnd = async (result: any) => {
-    const { source, destination } = result;
+  const moveTask = (
+    dragIndex: number,
+    hoverIndex: number,
+    sourceStatus: string,
+    targetStatus: string
+  ) => {
+    setTasks((prevTasks) => {
+      const newTasks = { ...prevTasks };
 
-    // Dropped outside a droppable area
-    if (!destination) return;
+      // If moving to a different column
+      if (sourceStatus !== targetStatus) {
+        const [movedTask] = newTasks[sourceStatus].splice(dragIndex, 1);
+        movedTask.status = targetStatus;
+        newTasks[targetStatus].splice(hoverIndex, 0, movedTask);
+      }
+      // If reordering within the same column
+      else {
+        const items = [...newTasks[sourceStatus]];
+        const [reorderedItem] = items.splice(dragIndex, 1);
+        items.splice(hoverIndex, 0, reorderedItem);
+        newTasks[sourceStatus] = items;
+      }
 
-    // No change in position
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    )
-      return;
+      return newTasks;
+    });
+  };
 
-    // Create a copy of tasks
-    const newTasks = { ...tasks };
-
-    // Remove task from source
-    const [movedTask] = newTasks[source.droppableId].splice(source.index, 1);
-
-    // Update task status if dropped in a different column
-    if (source.droppableId !== destination.droppableId) {
-      movedTask.status = destination.droppableId;
-    }
-
-    // Insert task at destination
-    newTasks[destination.droppableId].splice(destination.index, 0, movedTask);
-
-    // Update state
-    setTasks(newTasks);
-
-    // Update order and status in the database
+  const handleDrop = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      // Update the moved task
-      await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/tasks/${movedTask.id}`,
-        {
-          status: movedTask.status,
-          order: destination.index,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Update each list to reflect the new order and status
+      for (const status in tasks) {
+        const taskList = tasks[status];
 
-      // Update orders of all affected tasks
-      newTasks[destination.droppableId].forEach(async (task, index) => {
-        if (task.order !== index) {
-          await axios.put(
-            `${import.meta.env.VITE_API_BASE_URL}/tasks/${task.id}`,
-            { order: index },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+        for (let i = 0; i < taskList.length; i++) {
+          const task = taskList[i];
+
+          // If order changed or status changed
+          if (task.order !== i || task.status !== status) {
+            await axios.put(
+              `${import.meta.env.VITE_API_BASE_URL}/tasks/${task.id}`,
+              {
+                status: status,
+                order: i,
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          }
         }
-      });
+      }
 
-      toast.success("Task moved successfully");
+      toast.success("Task positions updated");
     } catch (error) {
-      console.error("Error updating task:", error);
-      toast.error("Failed to update task position");
+      console.error("Error updating task positions:", error);
+      toast.error("Failed to update task positions");
       // Revert to original state on error
       fetchTasks();
     }
@@ -140,164 +311,41 @@ export default function DragDropTaskList() {
   }
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* To Do Column */}
-        <div className="bg-gray-100 rounded-lg p-4">
-          <h3 className="font-medium text-lg mb-4">To Do</h3>
-          <Droppable droppableId="todo">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="min-h-[200px]"
-              >
-                {tasks.todo.map((task, index) => (
-                  <Draggable
-                    key={task.id}
-                    draggableId={task.id.toString()}
-                    index={index}
-                  >
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="bg-white rounded-lg shadow p-3 mb-2"
-                      >
-                        <div className="font-medium">{task.title}</div>
-                        {task.description && (
-                          <div className="text-sm text-gray-500 mt-1 truncate">
-                            {task.description}
-                          </div>
-                        )}
-                        {task.priority && (
-                          <div
-                            className={`mt-2 text-xs inline-block px-2 py-1 rounded-full ${
-                              task.priority === "high"
-                                ? "bg-red-100 text-red-800"
-                                : task.priority === "medium"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {task.priority}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
+    <DndProvider backend={HTML5Backend}>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Task Board</h2>
+          <button
+            onClick={handleDrop}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Save Positions
+          </button>
         </div>
 
-        {/* In Progress Column */}
-        <div className="bg-gray-100 rounded-lg p-4">
-          <h3 className="font-medium text-lg mb-4">In Progress</h3>
-          <Droppable droppableId="inprogress">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="min-h-[200px]"
-              >
-                {tasks.inprogress.map((task, index) => (
-                  <Draggable
-                    key={task.id}
-                    draggableId={task.id.toString()}
-                    index={index}
-                  >
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="bg-white rounded-lg shadow p-3 mb-2"
-                      >
-                        <div className="font-medium">{task.title}</div>
-                        {task.description && (
-                          <div className="text-sm text-gray-500 mt-1 truncate">
-                            {task.description}
-                          </div>
-                        )}
-                        {task.priority && (
-                          <div
-                            className={`mt-2 text-xs inline-block px-2 py-1 rounded-full ${
-                              task.priority === "high"
-                                ? "bg-red-100 text-red-800"
-                                : task.priority === "medium"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {task.priority}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TaskColumn
+            title="To Do"
+            status="todo"
+            tasks={tasks.todo}
+            moveTask={moveTask}
+          />
 
-        {/* Completed Column */}
-        <div className="bg-gray-100 rounded-lg p-4">
-          <h3 className="font-medium text-lg mb-4">Completed</h3>
-          <Droppable droppableId="completed">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="min-h-[200px]"
-              >
-                {tasks.completed.map((task, index) => (
-                  <Draggable
-                    key={task.id}
-                    draggableId={task.id.toString()}
-                    index={index}
-                  >
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="bg-white rounded-lg shadow p-3 mb-2"
-                      >
-                        <div className="font-medium">{task.title}</div>
-                        {task.description && (
-                          <div className="text-sm text-gray-500 mt-1 truncate">
-                            {task.description}
-                          </div>
-                        )}
-                        {task.priority && (
-                          <div
-                            className={`mt-2 text-xs inline-block px-2 py-1 rounded-full ${
-                              task.priority === "high"
-                                ? "bg-red-100 text-red-800"
-                                : task.priority === "medium"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {task.priority}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
+          <TaskColumn
+            title="In Progress"
+            status="inprogress"
+            tasks={tasks.inprogress}
+            moveTask={moveTask}
+          />
+
+          <TaskColumn
+            title="Completed"
+            status="completed"
+            tasks={tasks.completed}
+            moveTask={moveTask}
+          />
         </div>
       </div>
-    </DragDropContext>
+    </DndProvider>
   );
 }
