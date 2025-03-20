@@ -177,8 +177,8 @@ export default function DashboardHome() {
         return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
       });
 
-      // Take just the first 3 for the dashboard
-      setUpcomingTasks(filtered.slice(0, 3));
+      // Take just the first 4 for the dashboard
+      setUpcomingTasks(filtered.slice(0, 4));
     } catch (error) {
       console.error("Error fetching upcoming tasks:", error);
       throw error;
@@ -407,8 +407,6 @@ export default function DashboardHome() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard Overview</h1>
-
       {/* Main Stats Overview */}
       <div className="mb-8">
         <DashboardStats />

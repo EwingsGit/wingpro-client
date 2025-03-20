@@ -1,7 +1,7 @@
 // src/components/dashboard/Dashboard.tsx
 import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Menu } from "lucide-react";
 import TaskList from "./TaskList";
 import TaskForm from "./TaskForm";
 import Sidebar from "./Sidebar";
@@ -41,7 +41,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, []);
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div
         className={`sidebar fixed md:relative z-10 h-full transition-all duration-300 ease-in-out ${
@@ -72,21 +72,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
+              <Menu size={24} />
             </button>
           )}
 
@@ -118,7 +104,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
           {showAddTask && (
             <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
-              <div className="modal-content w-full max-w-md mx-4 fade-in">
+              <div className="modal-content max-w-md mx-4 fade-in">
                 <TaskForm
                   onClose={() => setShowAddTask(false)}
                   onTaskAdded={() => {
