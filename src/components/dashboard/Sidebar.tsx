@@ -34,6 +34,18 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           </li>
           <li>
             <Link
+              to="/dashboard/overdue"
+              className={`block px-4 py-2 ${
+                isActive("/dashboard/overdue")
+                  ? "bg-blue-50 text-red-600"
+                  : "text-red-600 hover:bg-red-50 hover:text-red-700"
+              }`}
+            >
+              Overdue
+            </Link>
+          </li>
+          <li>
+            <Link
               to="/dashboard/today"
               className={`block px-4 py-2 ${
                 isActive("/dashboard/today")

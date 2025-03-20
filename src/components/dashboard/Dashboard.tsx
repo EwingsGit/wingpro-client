@@ -7,6 +7,7 @@ import Sidebar from "./Sidebar";
 import Categories from "./Categories";
 import TodayTasks from "./TodayTasks";
 import UpcomingTasks from "./UpcomingTasks";
+import OverdueTasks from "./OverdueTasks";
 import DashboardStats from "./DashboardStats";
 import DragDropTaskList from "./DragDropTaskList";
 
@@ -79,6 +80,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </>
             }
           />
+
+          <Route
+            path="overdue"
+            element={
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h1 className="text-2xl font-bold text-red-600">
+                    Overdue Tasks
+                  </h1>
+                  <button
+                    onClick={() => setShowAddTask(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Add New Task
+                  </button>
+                </div>
+                <OverdueTasks />
+              </>
+            }
+          />
+
           <Route path="categories" element={<Categories />} />
           <Route path="stats" element={<DashboardStats />} />
           <Route path="kanban" element={<DragDropTaskList />} />
