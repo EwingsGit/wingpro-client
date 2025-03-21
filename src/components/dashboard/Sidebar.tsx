@@ -1,10 +1,12 @@
-// src/components/dashboard/Sidebar.tsx - Updated with task counts
+// src/components/dashboard/Sidebar.tsx
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
 
 interface SidebarProps {
   onLogout: () => void;
+  collapsed?: boolean;
+  toggleSidebar?: () => void;
 }
 
 interface TaskCounts {
@@ -20,7 +22,11 @@ interface Task {
   due_date: string | null;
 }
 
-export default function Sidebar({ onLogout }: SidebarProps) {
+export default function Sidebar({
+  onLogout,
+  collapsed,
+  toggleSidebar,
+}: SidebarProps) {
   const location = useLocation();
   const [taskCounts, setTaskCounts] = useState<TaskCounts>({
     all: 0,
@@ -114,10 +120,23 @@ export default function Sidebar({ onLogout }: SidebarProps) {
     </span>
   );
 
+  // Handle collapsed state if provided
+  const sidebarClasses = `bg-white shadow-md flex flex-col h-full ${
+    collapsed ? "w-16" : "w-64"
+  }`;
+
   return (
-    <aside className="w-64 bg-white shadow-md flex flex-col h-full">
-      <div className="p-4 border-b">
-        <h2 className="text-xl font-bold">WingPro</h2>
+    <aside className={sidebarClasses}>
+      <div className="p-4 border-b flex justify-between items-center">
+        {!collapsed && <h2 className="text-xl font-bold">WingPro</h2>}
+        {toggleSidebar && (
+          <button
+            onClick={toggleSidebar}
+            className="p-1 rounded-full hover:bg-gray-200"
+          >
+            {collapsed ? "→" : "←"}
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4">
@@ -131,8 +150,8 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                   : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
               }`}
             >
-              <span>All Tasks</span>
-              <Counter count={taskCounts.all} />
+              <span>{!collapsed && "All Tasks"}</span>
+              {!collapsed && <Counter count={taskCounts.all} />}
             </Link>
           </li>
           <li>
@@ -144,8 +163,8 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                   : "text-red-600 hover:bg-red-50 hover:text-red-700"
               }`}
             >
-              <span>Overdue</span>
-              <Counter count={taskCounts.overdue} />
+              <span>{!collapsed && "Overdue"}</span>
+              {!collapsed && <Counter count={taskCounts.overdue} />}
             </Link>
           </li>
           <li>
@@ -157,8 +176,8 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                   : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
               }`}
             >
-              <span>Today</span>
-              <Counter count={taskCounts.today} />
+              <span>{!collapsed && "Today"}</span>
+              {!collapsed && <Counter count={taskCounts.today} />}
             </Link>
           </li>
           <li>
@@ -170,8 +189,8 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                   : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
               }`}
             >
-              <span>Upcoming</span>
-              <Counter count={taskCounts.upcoming} />
+              <span>{!collapsed && "Upcoming"}</span>
+              {!collapsed && <Counter count={taskCounts.upcoming} />}
             </Link>
           </li>
           <li className="border-t my-2"></li>
@@ -184,7 +203,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                   : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
               }`}
             >
-              Categories
+              {!collapsed && "Categories"}
             </Link>
           </li>
           <li>
@@ -196,7 +215,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                   : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
               }`}
             >
-              Dashboard Stats
+              {!collapsed && "Dashboard Stats"}
             </Link>
           </li>
           <li>
@@ -208,7 +227,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                   : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
               }`}
             >
-              Kanban Board
+              {!collapsed && "Kanban Board"}
             </Link>
           </li>
         </ul>
@@ -217,9 +236,11 @@ export default function Sidebar({ onLogout }: SidebarProps) {
       <div className="p-4 border-t mt-auto">
         <button
           onClick={onLogout}
-          className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md"
+          className={`w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md ${
+            collapsed ? "px-2" : ""
+          }`}
         >
-          Logout
+          {!collapsed ? "Logout" : "←"}
         </button>
       </div>
     </aside>
