@@ -117,7 +117,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
 
   return (
     <aside className="w-64 bg-white shadow-md flex flex-col h-full">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b flex justify-center">
         <WingProLogo />
       </div>
 
