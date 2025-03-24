@@ -4,7 +4,7 @@ import React from "react";
 import logoWingSymbol from "../../assets/logo.svg";
 // For the full logo, we'll use the complete image with text
 // Note: You would need to add this image to your assets folder
-import fullLogo from "../../assets/full-logo.png";
+import fullLogo from "../../assets/full-logo.svg";
 
 interface WingProLogoProps {
   size?: "small" | "medium" | "large";
