@@ -1,14 +1,25 @@
 // src/components/common/WingProLogo.tsx
 import React from "react";
 
-const WingProLogo: React.FC = () => {
+interface WingProLogoProps {
+  className?: string;
+  showText?: boolean;
+  showDomain?: boolean;
+}
+
+const WingProLogo: React.FC<WingProLogoProps> = ({
+  className = "",
+  showText = true,
+  showDomain = true,
+}) => {
   return (
-    <div className="flex flex-col items-center">
+    <div className={`flex flex-col items-center ${className}`}>
       <div className="flex items-center">
+        {/* Blue wing logo */}
         <svg
-          width="40"
-          height="24"
-          viewBox="0 0 253 144"
+          width="50"
+          height="32"
+          viewBox="0 0 184 120"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="mr-2"
@@ -22,9 +33,15 @@ const WingProLogo: React.FC = () => {
             fill="#2174EA"
           />
         </svg>
-        <span className="text-2xl font-bold text-gray-800">WingPro</span>
+
+        {showText && (
+          <span className="text-2xl font-bold text-gray-800">WingPro</span>
+        )}
       </div>
-      <span className="text-sm text-blue-400">thewingpro.com</span>
+
+      {showDomain && (
+        <span className="text-sm text-blue-400">thewingpro.com</span>
+      )}
     </div>
   );
 };
