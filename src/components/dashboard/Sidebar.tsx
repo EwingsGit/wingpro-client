@@ -2,11 +2,20 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
+import {
+  Home,
+  Calendar,
+  AlertTriangle,
+  CalendarCheck,
+  BarChart3,
+  Layers,
+  ListTodo,
+  LogOut,
+  Tag,
+} from "lucide-react";
 
 interface SidebarProps {
   onLogout: () => void;
-  collapsed?: boolean;
-  toggleSidebar?: () => void;
 }
 
 interface TaskCounts {
@@ -22,11 +31,7 @@ interface Task {
   due_date: string | null;
 }
 
-export default function Sidebar({
-  onLogout,
-  collapsed,
-  toggleSidebar,
-}: SidebarProps) {
+export default function Sidebar({ onLogout }: SidebarProps) {
   const location = useLocation();
   const [taskCounts, setTaskCounts] = useState<TaskCounts>({
     all: 0,
@@ -103,144 +108,234 @@ export default function Sidebar({
   };
 
   const isActive = (path: string) => {
-    // For the dashboard root, match both "/dashboard" and "/dashboard/"
-    if (path === "/dashboard") {
-      return (
-        location.pathname === "/dashboard" ||
-        location.pathname === "/dashboard/"
-      );
-    }
     return location.pathname === path;
   };
 
   // Counter component with loading state
   const Counter = ({ count }: { count: number }) => (
-    <span className="ml-auto bg-gray-200 text-gray-700 text-xs font-medium rounded-full px-2 py-0.5 min-w-[1.5rem] text-center">
+    <span className="ml-auto bg-gray-100 text-gray-700 text-xs font-medium rounded-full px-2 py-0.5 min-w-[1.5rem] text-center">
       {isLoading ? "..." : count}
     </span>
   );
 
-  // Handle collapsed state if provided
-  const sidebarClasses = `bg-white shadow-md flex flex-col h-full ${
-    collapsed ? "w-16" : "w-64"
-  }`;
-
   return (
-    <aside className={sidebarClasses}>
-      <div className="p-4 border-b flex justify-between items-center">
-        {!collapsed && <h2 className="text-xl font-bold">WingPro</h2>}
-        {toggleSidebar && (
-          <button
-            onClick={toggleSidebar}
-            className="p-1 rounded-full hover:bg-gray-200"
+    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full z-10">
+      <div className="p-5 border-b border-gray-200">
+        <div className="flex items-center">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="mr-2"
           >
-            {collapsed ? "→" : "←"}
-          </button>
-        )}
+            <path
+              d="M16 3C8.82 3 3 8.82 3 16C3 23.18 8.82 29 16 29C23.18 29 29 23.18 29 16C29 8.82 23.18 3 16 3ZM16 7C18.76 7 21 9.24 21 12C21 14.76 18.76 17 16 17C13.24 17 11 14.76 11 12C11 9.24 13.24 7 16 7ZM16 25.4C12.5 25.4 9.44 23.66 7.6 21C7.64 18.5 12.8 17.1 16 17.1C19.2 17.1 24.36 18.5 24.4 21C22.56 23.66 19.5 25.4 16 25.4Z"
+              fill="#1D4ED8"
+            />
+          </svg>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            WingPro
+          </h2>
+        </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1">
+      <nav className="flex-1 overflow-y-auto py-5">
+        <div className="px-4 pb-2">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Dashboard
+          </h3>
+        </div>
+        <ul className="mt-2 space-y-1">
           <li>
             <Link
-              to="/dashboard"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+              to="/dashboard/home"
+              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
+                isActive("/dashboard/home")
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <span>{!collapsed && "All Tasks"}</span>
-              {!collapsed && <Counter count={taskCounts.all} />}
+              <Home
+                size={18}
+                className={
+                  isActive("/dashboard/home")
+                    ? "text-blue-700"
+                    : "text-gray-500"
+                }
+              />
+              <span className="ml-3">Dashboard</span>
             </Link>
           </li>
+
           <li>
             <Link
-              to="/dashboard/overdue"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard/overdue")
-                  ? "bg-blue-50 text-red-600"
-                  : "text-red-600 hover:bg-red-50 hover:text-red-700"
+              to="/dashboard/tasks"
+              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
+                isActive("/dashboard/tasks")
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <span>{!collapsed && "Overdue"}</span>
-              {!collapsed && <Counter count={taskCounts.overdue} />}
+              <ListTodo
+                size={18}
+                className={
+                  isActive("/dashboard/tasks")
+                    ? "text-blue-700"
+                    : "text-gray-500"
+                }
+              />
+              <span className="ml-3">All Tasks</span>
+              <Counter count={taskCounts.all} />
             </Link>
           </li>
+        </ul>
+
+        <div className="px-4 pt-5 pb-2">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Tasks
+          </h3>
+        </div>
+        <ul className="mt-2 space-y-1">
           <li>
             <Link
               to="/dashboard/today"
-              className={`flex items-center px-4 py-2 ${
+              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
                 isActive("/dashboard/today")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <span>{!collapsed && "Today"}</span>
-              {!collapsed && <Counter count={taskCounts.today} />}
+              <Calendar
+                size={18}
+                className={
+                  isActive("/dashboard/today")
+                    ? "text-blue-700"
+                    : "text-gray-500"
+                }
+              />
+              <span className="ml-3">Today</span>
+              <Counter count={taskCounts.today} />
             </Link>
           </li>
+
           <li>
             <Link
               to="/dashboard/upcoming"
-              className={`flex items-center px-4 py-2 ${
+              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
                 isActive("/dashboard/upcoming")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <span>{!collapsed && "Upcoming"}</span>
-              {!collapsed && <Counter count={taskCounts.upcoming} />}
+              <CalendarCheck
+                size={18}
+                className={
+                  isActive("/dashboard/upcoming")
+                    ? "text-blue-700"
+                    : "text-gray-500"
+                }
+              />
+              <span className="ml-3">Upcoming</span>
+              <Counter count={taskCounts.upcoming} />
             </Link>
           </li>
-          <li className="border-t my-2"></li>
+
           <li>
             <Link
-              to="/dashboard/categories"
-              className={`block px-4 py-2 ${
-                isActive("/dashboard/categories")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+              to="/dashboard/overdue"
+              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
+                isActive("/dashboard/overdue")
+                  ? "bg-red-50 text-red-700"
+                  : "text-red-600 hover:bg-red-50 hover:text-red-700"
               }`}
             >
-              {!collapsed && "Categories"}
+              <AlertTriangle size={18} className="text-red-600" />
+              <span className="ml-3">Overdue</span>
+              <Counter count={taskCounts.overdue} />
             </Link>
           </li>
-          <li>
-            <Link
-              to="/dashboard/stats"
-              className={`block px-4 py-2 ${
-                isActive("/dashboard/stats")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              {!collapsed && "Dashboard Stats"}
-            </Link>
-          </li>
+
           <li>
             <Link
               to="/dashboard/kanban"
-              className={`block px-4 py-2 ${
+              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
                 isActive("/dashboard/kanban")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              {!collapsed && "Kanban Board"}
+              <Layers
+                size={18}
+                className={
+                  isActive("/dashboard/kanban")
+                    ? "text-blue-700"
+                    : "text-gray-500"
+                }
+              />
+              <span className="ml-3">Kanban Board</span>
+            </Link>
+          </li>
+        </ul>
+
+        <div className="px-4 pt-5 pb-2">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Organize
+          </h3>
+        </div>
+        <ul className="mt-2 space-y-1">
+          <li>
+            <Link
+              to="/dashboard/categories"
+              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
+                isActive("/dashboard/categories")
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Tag
+                size={18}
+                className={
+                  isActive("/dashboard/categories")
+                    ? "text-blue-700"
+                    : "text-gray-500"
+                }
+              />
+              <span className="ml-3">Categories</span>
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              to="/dashboard/stats"
+              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
+                isActive("/dashboard/stats")
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <BarChart3
+                size={18}
+                className={
+                  isActive("/dashboard/stats")
+                    ? "text-blue-700"
+                    : "text-gray-500"
+                }
+              />
+              <span className="ml-3">Statistics</span>
             </Link>
           </li>
         </ul>
       </nav>
 
-      <div className="p-4 border-t mt-auto">
+      <div className="p-4 border-t border-gray-200 mt-auto">
         <button
           onClick={onLogout}
-          className={`w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md ${
-            collapsed ? "px-2" : ""
-          }`}
+          className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors"
         >
-          {!collapsed ? "Logout" : "←"}
+          <LogOut size={18} className="text-gray-500 mr-2" />
+          Logout
         </button>
       </div>
     </aside>
