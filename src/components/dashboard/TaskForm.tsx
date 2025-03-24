@@ -1,172 +1,244 @@
-// src/components/dashboard/Sidebar.tsx
-import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  ListTodo,
-  CalendarClock,
-  Calendar,
-  ClipboardList,
-  Tag,
-  BarChart2,
-  Kanban,
-  LogOut,
-} from "lucide-react";
+// src/components/dashboard/TaskForm.tsx
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import { X, Calendar } from "lucide-react";
 
-interface SidebarProps {
-  onLogout: () => void;
+interface TaskFormProps {
+  onClose: () => void;
+  onTaskAdded: () => void;
 }
 
-export default function Sidebar({ onLogout }: SidebarProps) {
-  const location = useLocation();
+export default function TaskForm({ onClose, onTaskAdded }: TaskFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    status: "todo",
+    priority: "medium",
+    category_id: "",
+    due_date: "",
+  });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const isActive = (path: string) => {
-    if (path === "/dashboard" && location.pathname === "/dashboard") {
-      return true;
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/categories`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setCategories(response.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        toast.error("Failed to load categories");
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required";
     }
-    return location.pathname === path;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Fix the handleChange function to have the correct type signature
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/tasks`,
+        {
+          ...formData,
+          category_id: formData.category_id
+            ? parseInt(formData.category_id)
+            : null,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success("Task created successfully");
+      onTaskAdded();
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast.error("Failed to create task");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <aside className="w-64 bg-white shadow-md flex flex-col h-full">
-      <div className="p-4 border-b flex items-center">
-        <div className="flex items-center">
-          <div className="mr-2">
-            <svg
-              width="40"
-              height="30"
-              viewBox="0 0 200 160"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M95 10 L180 120 L120 85 L95 10" fill="#1e77e3" />
-              <path d="M95 10 L30 80 L80 60 L95 10" fill="#3b92f0" />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <h2 className="text-xl font-bold text-gray-800">WingPro</h2>
-            <span className="text-xs text-blue-500">thewingpro.com</span>
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1">
-          <li>
-            <Link
-              to="/dashboard"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              <LayoutDashboard className="h-5 w-5 mr-2" />
-              Dashboard
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/dashboard/all-tasks"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard/all-tasks")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              <ListTodo className="h-5 w-5 mr-2" />
-              All Tasks
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/dashboard/overdue"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard/overdue")
-                  ? "bg-red-50 text-red-600"
-                  : "text-red-600 hover:bg-red-50 hover:text-red-700"
-              }`}
-            >
-              <ClipboardList className="h-5 w-5 mr-2" />
-              Overdue
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/dashboard/today"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard/today")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              <Calendar className="h-5 w-5 mr-2" />
-              Today
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/dashboard/upcoming"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard/upcoming")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              <CalendarClock className="h-5 w-5 mr-2" />
-              Upcoming
-            </Link>
-          </li>
-          <li className="border-t my-2"></li>
-          <li>
-            <Link
-              to="/dashboard/categories"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard/categories")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              <Tag className="h-5 w-5 mr-2" />
-              Categories
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/dashboard/stats"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard/stats")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              <BarChart2 className="h-5 w-5 mr-2" />
-              Statistics
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/dashboard/kanban"
-              className={`flex items-center px-4 py-2 ${
-                isActive("/dashboard/kanban")
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              <Kanban className="h-5 w-5 mr-2" />
-              Kanban Board
-            </Link>
-          </li>
-        </ul>
-      </nav>
-
-      <div className="p-4 border-t mt-auto">
+    <>
+      <div className="p-5 border-b border-gray-200 flex justify-between items-center">
+        <h2 className="text-xl font-bold">Create New Task</h2>
         <button
-          onClick={onLogout}
-          className="w-full flex items-center justify-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md"
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 transition-colors"
         >
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
+          <X size={20} />
         </button>
       </div>
-    </aside>
+
+      <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700">
+            Title <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            placeholder="What needs to be done?"
+            className={`w-full rounded-md border px-3 py-2 ${
+              errors.title ? "border-red-500" : "border-gray-300"
+            }`}
+          />
+          {errors.title && (
+            <div className="mt-1 text-red-500 text-sm">{errors.title}</div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700">
+            Description
+          </label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder="Add details about this task..."
+            rows={3}
+            className="w-full rounded-md border border-gray-300 px-3 py-2"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Status
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+            >
+              <option value="todo">To Do</option>
+              <option value="inprogress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Priority
+            </label>
+            <select
+              name="priority"
+              value={formData.priority}
+              onChange={handleChange}
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700">
+            Category
+          </label>
+          <select
+            name="category_id"
+            value={formData.category_id}
+            onChange={handleChange}
+            className="w-full rounded-md border border-gray-300 px-3 py-2"
+          >
+            <option value="">No Category</option>
+            {categories.map((category: any) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700">
+            Due Date
+          </label>
+          <div className="relative">
+            <input
+              type="date"
+              name="due_date"
+              value={formData.due_date}
+              onChange={handleChange}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-10"
+            />
+            <Calendar
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={18}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t">
+          <button
+            type="button"
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 mr-2"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating..." : "Create Task"}
+          </button>
+        </div>
+      </form>
+    </>
   );
 }
