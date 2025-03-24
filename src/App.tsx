@@ -1,348 +1,166 @@
-// src/components/dashboard/Sidebar.tsx
+// src/App.tsx
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import axios from "axios";
-import {
-  Home,
-  Calendar,
-  AlertTriangle,
-  CalendarCheck,
-  BarChart3,
-  Layers,
-  ListTodo,
-  LogOut,
-  Tag,
-} from "lucide-react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { LoginForm } from "./components/auth/LoginForm";
+import { RegisterForm } from "./components/auth/RegisterForm";
+import { Toaster } from "react-hot-toast";
+import Dashboard from "./components/dashboard/Dashboard";
 
-interface SidebarProps {
-  onLogout: () => void;
-}
-
-interface TaskCounts {
-  all: number;
-  overdue: number;
-  today: number;
-  upcoming: number;
-}
-
-interface Task {
-  id: number;
-  status: string;
-  due_date: string | null;
-}
-
-export default function Sidebar({ onLogout }: SidebarProps) {
-  const location = useLocation();
-  const [taskCounts, setTaskCounts] = useState<TaskCounts>({
-    all: 0,
-    overdue: 0,
-    today: 0,
-    upcoming: 0,
-  });
+function App() {
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchTaskCounts();
-  }, [location.pathname]); // Refresh counts when navigating between pages
-
-  const fetchTaskCounts = async () => {
-    try {
-      setIsLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/tasks`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const tasks: Task[] = response.data;
-
-      // Calculate counts
-      const allCount = tasks.length;
-
-      // Get today's date
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      // Tomorrow for today's tasks
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      // Two weeks for upcoming tasks
-      const twoWeeksLater = new Date(today);
-      twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
-
-      // Count overdue tasks (due before today and not completed)
-      const overdueCount = tasks.filter((task) => {
-        if (!task.due_date) return false;
-        const dueDate = new Date(task.due_date);
-        return dueDate < today && task.status !== "completed";
-      }).length;
-
-      // Count today's tasks
-      const todayCount = tasks.filter((task) => {
-        if (!task.due_date) return false;
-        const dueDate = new Date(task.due_date);
-        return dueDate >= today && dueDate < tomorrow;
-      }).length;
-
-      // Count upcoming tasks (next two weeks, excluding today)
-      const upcomingCount = tasks.filter((task) => {
-        if (!task.due_date) return false;
-        const dueDate = new Date(task.due_date);
-        return dueDate >= tomorrow && dueDate <= twoWeeksLater;
-      }).length;
-
-      setTaskCounts({
-        all: allCount,
-        overdue: overdueCount,
-        today: todayCount,
-        upcoming: upcomingCount,
-      });
-    } catch (error) {
-      console.error("Error fetching task counts:", error);
-    } finally {
-      setIsLoading(false);
+    // Check if user is authenticated on mount
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true);
+      // Only navigate if we're on the homepage
+      if (
+        window.location.pathname === "/" ||
+        window.location.pathname === "/login"
+      ) {
+        navigate("/dashboard");
+      }
     }
+    setIsLoading(false);
+  }, []); // Empty dependency array - run only once on mount
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    navigate("/");
   };
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+  // Auth page component
+  const AuthPage = () => (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        <div className="flex justify-center mb-6">
+          <div className="text-center">
+            <div className="flex justify-center mb-4">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 32 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M16 3C8.82 3 3 8.82 3 16C3 23.18 8.82 29 16 29C23.18 29 29 23.18 29 16C29 8.82 23.18 3 16 3ZM16 7C18.76 7 21 9.24 21 12C21 14.76 18.76 17 16 17C13.24 17 11 14.76 11 12C11 9.24 13.24 7 16 7ZM16 25.4C12.5 25.4 9.44 23.66 7.6 21C7.64 18.5 12.8 17.1 16 17.1C19.2 17.1 24.36 18.5 24.4 21C22.56 23.66 19.5 25.4 16 25.4Z"
+                  fill="#1D4ED8"
+                />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-1">WingPro</h2>
+            <p className="text-gray-600 mb-8">Task management made simple</p>
+          </div>
+        </div>
 
-  // Counter component with loading state
-  const Counter = ({ count }: { count: number }) => (
-    <span className="ml-auto bg-gray-100 text-gray-700 text-xs font-medium rounded-full px-2 py-0.5 min-w-[1.5rem] text-center">
-      {isLoading ? "..." : count}
-    </span>
-  );
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+          <div className="flex border-b border-gray-200">
+            <button
+              className={`flex-1 py-4 font-medium text-center ${
+                mode === "login"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+              onClick={() => setMode("login")}
+            >
+              Login
+            </button>
+            <button
+              className={`flex-1 py-4 font-medium text-center ${
+                mode === "register"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+              onClick={() => setMode("register")}
+            >
+              Register
+            </button>
+          </div>
 
-  return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full z-10">
-      <div className="p-5 border-b border-gray-200">
-        <div className="flex items-center">
-          <svg
-            width="40"
-            height="24"
-            viewBox="0 0 253 144"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="mr-2"
-          >
-            <path
-              d="M183.751 0L69.096 85.461L0 76.673L183.751 0Z"
-              fill="#2174EA"
-            />
-            <path
-              d="M252.698 36.217L103.927 144L41.995 114.808L252.698 36.217Z"
-              fill="#2174EA"
-            />
-          </svg>
-          <div className="flex flex-col">
-            <h2 className="text-xl font-bold text-gray-800">WingPro</h2>
-            <span className="text-xs text-blue-400">thewingpro.com</span>
+          <div className="p-6">
+            {mode === "login" ? (
+              <LoginForm
+                onLoginSuccess={() => {
+                  setIsAuthenticated(true);
+                  navigate("/dashboard");
+                }}
+              />
+            ) : (
+              <RegisterForm setMode={setMode} />
+            )}
           </div>
         </div>
       </div>
+    </div>
+  );
 
-      <nav className="flex-1 overflow-y-auto py-5">
-        <div className="px-4 pb-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Dashboard
-          </h3>
-        </div>
-        <ul className="mt-2 space-y-1">
-          <li>
-            <Link
-              to="/dashboard/home"
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
-                isActive("/dashboard/home")
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Home
-                size={18}
-                className={
-                  isActive("/dashboard/home")
-                    ? "text-blue-700"
-                    : "text-gray-500"
-                }
-              />
-              <span className="ml-3">Dashboard</span>
-            </Link>
-          </li>
-
-          <li>
-            <Link
-              to="/dashboard/tasks"
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
-                isActive("/dashboard/tasks")
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <ListTodo
-                size={18}
-                className={
-                  isActive("/dashboard/tasks")
-                    ? "text-blue-700"
-                    : "text-gray-500"
-                }
-              />
-              <span className="ml-3">All Tasks</span>
-              <Counter count={taskCounts.all} />
-            </Link>
-          </li>
-        </ul>
-
-        <div className="px-4 pt-5 pb-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Tasks
-          </h3>
-        </div>
-        <ul className="mt-2 space-y-1">
-          <li>
-            <Link
-              to="/dashboard/today"
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
-                isActive("/dashboard/today")
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Calendar
-                size={18}
-                className={
-                  isActive("/dashboard/today")
-                    ? "text-blue-700"
-                    : "text-gray-500"
-                }
-              />
-              <span className="ml-3">Today</span>
-              <Counter count={taskCounts.today} />
-            </Link>
-          </li>
-
-          <li>
-            <Link
-              to="/dashboard/upcoming"
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
-                isActive("/dashboard/upcoming")
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <CalendarCheck
-                size={18}
-                className={
-                  isActive("/dashboard/upcoming")
-                    ? "text-blue-700"
-                    : "text-gray-500"
-                }
-              />
-              <span className="ml-3">Upcoming</span>
-              <Counter count={taskCounts.upcoming} />
-            </Link>
-          </li>
-
-          <li>
-            <Link
-              to="/dashboard/overdue"
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
-                isActive("/dashboard/overdue")
-                  ? "bg-red-50 text-red-700"
-                  : "text-red-600 hover:bg-red-50 hover:text-red-700"
-              }`}
-            >
-              <AlertTriangle size={18} className="text-red-600" />
-              <span className="ml-3">Overdue</span>
-              <Counter count={taskCounts.overdue} />
-            </Link>
-          </li>
-
-          <li>
-            <Link
-              to="/dashboard/kanban"
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
-                isActive("/dashboard/kanban")
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Layers
-                size={18}
-                className={
-                  isActive("/dashboard/kanban")
-                    ? "text-blue-700"
-                    : "text-gray-500"
-                }
-              />
-              <span className="ml-3">Kanban Board</span>
-            </Link>
-          </li>
-        </ul>
-
-        <div className="px-4 pt-5 pb-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Organize
-          </h3>
-        </div>
-        <ul className="mt-2 space-y-1">
-          <li>
-            <Link
-              to="/dashboard/categories"
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
-                isActive("/dashboard/categories")
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Tag
-                size={18}
-                className={
-                  isActive("/dashboard/categories")
-                    ? "text-blue-700"
-                    : "text-gray-500"
-                }
-              />
-              <span className="ml-3">Categories</span>
-            </Link>
-          </li>
-
-          <li>
-            <Link
-              to="/dashboard/stats"
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg ${
-                isActive("/dashboard/stats")
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <BarChart3
-                size={18}
-                className={
-                  isActive("/dashboard/stats")
-                    ? "text-blue-700"
-                    : "text-gray-500"
-                }
-              />
-              <span className="ml-3">Statistics</span>
-            </Link>
-          </li>
-        </ul>
-      </nav>
-
-      <div className="p-4 border-t border-gray-200 mt-auto">
-        <button
-          onClick={onLogout}
-          className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors"
-        >
-          <LogOut size={18} className="text-gray-500 mr-2" />
-          Logout
-        </button>
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
-    </aside>
+    );
+  }
+
+  return (
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "#fff",
+            color: "#333",
+            borderRadius: "0.5rem",
+            boxShadow:
+              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#10B981",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#EF4444",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage />
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage />
+          }
+        />
+        <Route
+          path="/dashboard/*"
+          element={
+            isAuthenticated ? (
+              <Dashboard onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </>
   );
 }
+
+export default App;
