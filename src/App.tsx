@@ -5,6 +5,7 @@ import { LoginForm } from "./components/auth/LoginForm";
 import { RegisterForm } from "./components/auth/RegisterForm";
 import { Toaster } from "react-hot-toast";
 import Dashboard from "./components/dashboard/Dashboard";
+import WingProLogo from "./components/common/WingProLogo";
 
 function App() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -41,20 +42,8 @@ function App() {
         <div className="flex justify-center mb-6">
           <div className="text-center">
             <div className="flex justify-center mb-4">
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 32 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M16 3C8.82 3 3 8.82 3 16C3 23.18 8.82 29 16 29C23.18 29 29 23.18 29 16C29 8.82 23.18 3 16 3ZM16 7C18.76 7 21 9.24 21 12C21 14.76 18.76 17 16 17C13.24 17 11 14.76 11 12C11 9.24 13.24 7 16 7ZM16 25.4C12.5 25.4 9.44 23.66 7.6 21C7.64 18.5 12.8 17.1 16 17.1C19.2 17.1 24.36 18.5 24.4 21C22.56 23.66 19.5 25.4 16 25.4Z"
-                  fill="#1D4ED8"
-                />
-              </svg>
+              <WingProLogo size="large" variant="full" showTagline={true} />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-1">WingPro</h2>
             <p className="text-gray-600 mb-8">Task management made simple</p>
           </div>
         </div>

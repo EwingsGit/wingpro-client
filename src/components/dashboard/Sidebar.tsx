@@ -14,6 +14,7 @@ import {
   Tag,
 } from "lucide-react";
 
+import WingProLogo from "../common/WingProLogo";
 interface SidebarProps {
   onLogout: () => void;
 }
@@ -121,24 +122,9 @@ export default function Sidebar({ onLogout }: SidebarProps) {
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full z-10">
       <div className="p-5 border-b border-gray-200">
-        <div className="flex items-center">
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 32 32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="mr-2"
-          >
-            <path
-              d="M16 3C8.82 3 3 8.82 3 16C3 23.18 8.82 29 16 29C23.18 29 29 23.18 29 16C29 8.82 23.18 3 16 3ZM16 7C18.76 7 21 9.24 21 12C21 14.76 18.76 17 16 17C13.24 17 11 14.76 11 12C11 9.24 13.24 7 16 7ZM16 25.4C12.5 25.4 9.44 23.66 7.6 21C7.64 18.5 12.8 17.1 16 17.1C19.2 17.1 24.36 18.5 24.4 21C22.56 23.66 19.5 25.4 16 25.4Z"
-              fill="#1D4ED8"
-            />
-          </svg>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            WingPro
-          </h2>
-        </div>
+        <Link to="/dashboard/home">
+          <WingProLogo size="small" variant="full" showTagline={false} />
+        </Link>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-5">

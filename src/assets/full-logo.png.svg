@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80">
+    <!-- Wings Symbol -->
+    <path d="M30 40 L60 25 L80 40 L60 35 Z" fill="#2171CD"/>
+    <path d="M40 50 L70 35 L90 50 L70 45 Z" fill="#4A90E2"/>
+    
+    <!-- WingPro Text -->
+    <text x="100" y="45" font-size="28" font-weight="bold" fill="#333333">WingPro</text>
+    
+    <!-- Domain pill -->
+    <rect x="100" y="52" width="120" height="16" fill="#F8F9FA" rx="8"/>
+    <text x="110" y="64" font-size="12" fill="#4A90E2">thewingpro.com</text>
+</svg>

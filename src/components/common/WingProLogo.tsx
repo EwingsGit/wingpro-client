@@ -1,30 +1,73 @@
 // src/components/common/WingProLogo.tsx
 import React from "react";
+// Import the logo wing symbol SVG for the icon-only version
+import logoWingSymbol from "../../assets/logo.svg";
+// For the full logo, we'll use the complete image with text
+// Note: You would need to add this image to your assets folder
+import fullLogo from "../../assets/full-logo.png";
 
-const WingProLogo: React.FC = () => {
-  return (
-    <div className="flex flex-col items-center">
-      <div className="flex items-center">
-        <svg
-          width="40"
-          height="24"
-          viewBox="0 0 253 144"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="mr-2"
-        >
-          <path
-            d="M183.751 0L69.096 85.461L0 76.673L183.751 0Z"
-            fill="#2174EA"
-          />
-          <path
-            d="M252.698 36.217L103.927 144L41.995 114.808L252.698 36.217Z"
-            fill="#2174EA"
-          />
-        </svg>
-        <span className="text-2xl font-bold text-gray-800">WingPro</span>
+interface WingProLogoProps {
+  size?: "small" | "medium" | "large";
+  variant?: "full" | "symbol-only";
+  showTagline?: boolean;
+}
+
+const WingProLogo: React.FC<WingProLogoProps> = ({
+  size = "medium",
+  variant = "full",
+  showTagline = true,
+}) => {
+  // Define sizes for different variants
+  const sizes = {
+    small: {
+      container: "flex items-center",
+      logo: "h-8",
+      symbol: "h-6 w-12 mr-2",
+      text: "text-lg font-bold text-gray-800",
+      tagline: "text-xs text-blue-400",
+    },
+    medium: {
+      container: "flex items-center",
+      logo: "h-12",
+      symbol: "h-8 w-16 mr-2",
+      text: "text-2xl font-bold text-gray-800",
+      tagline: "text-sm text-blue-400",
+    },
+    large: {
+      container: "flex items-center",
+      logo: "h-16",
+      symbol: "h-12 w-24 mr-3",
+      text: "text-3xl font-bold text-gray-800",
+      tagline: "text-base text-blue-400",
+    },
+  };
+
+  const currentSize = sizes[size];
+
+  if (variant === "symbol-only") {
+    // Only show the wing symbol
+    return (
+      <div className={currentSize.container}>
+        <img
+          src={logoWingSymbol}
+          alt="WingPro Logo Symbol"
+          className={currentSize.symbol}
+        />
+        <div className="flex flex-col">
+          <span className={currentSize.text}>WingPro</span>
+          {showTagline && (
+            <span className={currentSize.tagline}>thewingpro.com</span>
+          )}
+        </div>
       </div>
-      <span className="text-sm text-blue-400">thewingpro.com</span>
+    );
+  }
+
+  // Show the full logo with text
+  return (
+    <div className={currentSize.container}>
+      <img src={fullLogo} alt="WingPro Logo" className={currentSize.logo} />
+      {/* We don't need to add the tagline separately since it's part of the full logo */}
     </div>
   );
 };
